@@ -1,13 +1,5 @@
 /*
- * (c) Copyright, Real-Time Innovations, 2020.  All rights reserved.
- * RTI grants Licensee a license to use, modify, compile, and create derivative
- * works of the software solely for use with RTI Connext DDS. Licensee may
- * redistribute copies of the software provided that all such copies are subject
- * to this license. The software is provided "as is", with no warranty of any
- * type, including any warranty for fitness for any purpose. RTI is under no
- * obligation to maintain or support the software. RTI shall not be liable for
- * any incidental or consequential damages arising out of the use or inability
- * to use the software.
+ * sort out (c) Copyright TBD
  */
 
 #include <iostream>
@@ -17,10 +9,33 @@
 #include <rti/config/Logger.hpp>  // for logging
 // Or simply include <dds/dds.hpp> 
 
-#include "chocolate_factory.hpp"
+#include "canpubsub.hpp"
 #include "application.hpp"  // Argument parsing
 
 using namespace application;
+
+std::string simdata[10];
+
+
+void populateSimData() {
+  simdata[0] = "can0  698   [4]  73 00 00 00";
+  simdata[1] = "can0  740   [8]  74 00 00 00 00 00 00 00";
+  simdata[2] = "can0  4A7   [5]  75 00 00 00 00";
+  simdata[3] = "can0  118   [7]  76 00 00 00 00 00 00";
+  simdata[4] = "can0  7B9   [5]  77 00 00 00 00";
+  simdata[5] = "can0  436   [6]  78 00 00 00 00 00";
+  simdata[6] = "can0  231   [1]  79";
+  simdata[7] = "can0  1F7   [8]  7A 00 00 00 00 00 00 00";
+  simdata[8] = "can0  053   [2]  7B 00";
+  simdata[9] = "can0  35E   [2]  7C 00";
+}
+
+
+std::string getSimData() {
+  //std::cout << std::to_string(rand() % 10) << std::endl;
+  //std::cout << simdata[rand() % 10] << std::endl;
+  return simdata[rand() % 10];
+}
 
 void run_example(
         unsigned int domain_id,
@@ -32,41 +47,35 @@ void run_example(
     // DomainParticipant QoS is configured in USER_QOS_PROFILES.xml
     dds::domain::DomainParticipant participant(domain_id);
 
-    // A Topic has a name and a datatype. Create a Topic named
-    // "ChocolateTemperature" with type Temperature
-    dds::topic::Topic<Temperature> topic(participant, "ChocolateTemperature");
-    // Exercise #2.1: Add new Topic
+    dds::topic::Topic<CanData> topic(participant, "CAN Topic");
 
 
     // A Publisher allows an application to create one or more DataWriters
     // Publisher QoS is configured in USER_QOS_PROFILES.xml
     dds::pub::Publisher publisher(participant);
 
-    // This DataWriter writes data on Topic "ChocolateTemperature"
     // DataWriter QoS is configured in USER_QOS_PROFILES.xml
-    dds::pub::DataWriter<Temperature> writer(publisher, topic);
-    // Exercise #2.2: Add new DataWriter and data sample
+    dds::pub::DataWriter<CanData> writer(publisher, topic);
 
     // Create data sample for writing
-    Temperature sample;
+    CanData sample;
     for (unsigned int count = 0;
          !shutdown_requested && count < sample_count;
          count++) {
         // Modify the data to be written here
         sample.sensor_id(sensor_id);
-        sample.degrees(rand() % 3 + 30);  // Random number between 30 and 32
+        sample.sentence(getSimData()); 
 
-        // Exercise #2.3 Write data with new ChocolateLotState DataWriter
-
-        std::cout << "Writing ChocolateTemperature, count " << count
+        std::cout << "Writing CAN Data, count " << count
                   << std::endl;
 
         writer.write(sample);
 
-        // Exercise #1.1: Change this to sleep 100 ms in between writing temperatures
+	// 100 ms
         rti::util::sleep(dds::core::Duration(0.1));
     }
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -78,6 +87,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     setup_signal_handlers();
+
+    populateSimData();
 
     // Sets Connext verbosity to help debugging
     rti::config::Logger::instance().verbosity(arguments.verbosity);
