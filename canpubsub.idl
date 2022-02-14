@@ -1,0 +1,29 @@
+/*
+ * sort out (c) Copyright TBD
+ */
+
+// CAN data "sentence" data type
+struct CanData {
+    // ID of the sensor sending the data -- accurate way to model?  CAN ID is included in frame.
+    string<256> sensor_id;
+
+    // CAN data frame "sentence" -- accurate way to model? Includes all SOF/ACK/EOF etc, may just need the data bits.
+    string<126> sentence;
+};
+
+// Status of the CAN traffic
+enum CanStatusKind {
+    WAITING,
+    PROCESSING,
+    COMPLETED
+};
+
+struct CanState {
+    // Unique ID of this CAN node... in case there is more than one CAN bus domain?
+    uint32 node_id;
+
+    // Current status of the CAN traffic: Waiting/Processing/Completed
+    CanStatusKind can_status;
+
+};
+
